@@ -24,6 +24,8 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.EncoderException;
@@ -46,6 +48,7 @@ import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.InputStreamEntity;
@@ -145,8 +148,12 @@ public class FilesClient
         SchemeRegistry schemeRegistry = new SchemeRegistry();
         schemeRegistry.register(
                 new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-        schemeRegistry.register(
-                new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+
+        HostnameVerifier hostnameVerifier = org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
+        SSLSocketFactory secureSocketFactory = SSLSocketFactory.getSocketFactory();
+        secureSocketFactory.setHostnameVerifier((X509HostnameVerifier) hostnameVerifier);
+        schemeRegistry.register(new Scheme("https", secureSocketFactory, 443));
+        HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
         client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, schemeRegistry), params);
         
         if (authUrl == null) {
